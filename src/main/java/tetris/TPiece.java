@@ -1,12 +1,12 @@
 package tetris;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
 final class TPiece extends Piece {
 
-	TPiece(TetrisTabelModel model, Cell base) {
+	TPiece(TetrisMatrix model, Cell base) {
 		super(model, base);
 		setColor(Color.MAGENTA);
 	}

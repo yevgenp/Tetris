@@ -1,12 +1,12 @@
 package tetris;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
 final class JPiece extends Piece {
 
-	JPiece(TetrisTabelModel model, Cell base) {
+	JPiece(TetrisMatrix model, Cell base) {
 		super(model, base);
 		setColor(Color.BLUE);
 	}

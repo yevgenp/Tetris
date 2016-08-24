@@ -1,6 +1,6 @@
 package tetris;
 
-final class Cell {
+final class Cell implements AbstractCell {
 	//x - model row, y - model column
 	private int x,y;
 
@@ -31,6 +31,36 @@ final class Cell {
 	}
 
 	@Override
+	public int get(char coord) {
+		switch (coord) {
+			case 'x':
+			case 'X':
+				return this.x;
+			case 'y':
+			case 'Y':
+				return this.y;
+			default:
+				throw new IllegalArgumentException("Unknown coordinate.");
+		}
+	}
+
+	@Override
+	public void set(char coord, int value) {
+		switch (coord) {
+			case 'x':
+			case 'X':
+				this.x = value;
+				break;
+			case 'y':
+			case 'Y':
+				this.y = value;
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown coordinate.");
+		}
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 227;
 		int result = 1;
@@ -48,11 +78,7 @@ final class Cell {
 		if (getClass() != obj.getClass())
 			return false;
 		Cell other = (Cell) obj;
-		if (x != other.x)
-			return false;
-		if (y != other.y)
-			return false;
-		return true;
+		return x == other.x && y == other.y;
 	}
 
 	@Override

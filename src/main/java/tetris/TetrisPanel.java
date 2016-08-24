@@ -1,35 +1,18 @@
 package tetris;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Enumeration;
-import java.util.TreeSet;
-
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.Timer;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 
 @SuppressWarnings("serial")
 public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 
-	static final int TABLE_ROW_NUM = 20;
-	static final int TABLE_COL_NUM = 10;
-	static final int TABLE_COL_WIDTH = 20;
 	private static final String scoreLabelName = "Score: ";
 	private static final String useLabelName = "<html>Use arrow ctrls<br>to shift "
 			+ "and Z <br>to rotate</html>";
@@ -37,7 +20,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 	private final double SCORE_BONUS = 1.5;
 	private final int LINE_SCORE = 100;
 	private JTable table;
-	private TetrisTabelModel model;
+	private TetrisTableModel model;
 	private JLabel scoreLabel;
 	private JLabel useLabel;
 	private JButton startButton, pauseButton;
@@ -47,19 +30,19 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 	private Timer timer;
 
 	public TetrisPanel() {
-		model = new TetrisTabelModel();
+		model = new TetrisTableModel();
 		table = new JTable(model);
 		table.setDefaultRenderer(Color.class, new TetrisTabelCellRenderer());
-		table.setRowHeight(TABLE_ROW_NUM);
-		setColumnsWidth(TABLE_COL_WIDTH);
+		table.setRowHeight(Constants.TABLE_ROW_NUM);
+		setColumnsWidth(Constants.TABLE_COL_WIDTH);
 		JPanel controlsPanel = createControlsPanel();
 		setLayout(new GridBagLayout());
 		table.addKeyListener(this);
 		add(table);
 		add(controlsPanel);
 	}
-	
-	public void setModel(TetrisTabelModel model) {
+
+	public void setModel(TetrisTableModel model) {
 		this.model = model;
 	}
 
@@ -108,7 +91,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 		pauseButton.setEnabled(false);
 	}
 
-	public class TetrisTabelCellRenderer extends DefaultTableCellRenderer {
+	private class TetrisTabelCellRenderer extends DefaultTableCellRenderer {
 
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -129,7 +112,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 			int delay = 500/speed;
 			timer = new Timer(delay, this);
 			timer.setActionCommand("timer");
-			resetPanelModel(model);
+			model.reset();
 			score = 0;
 			updateScore(score);
 			timer.start();
@@ -173,14 +156,6 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 		setButtonsInitialState();
 	}
 
-	public void resetPanelModel(TetrisTabelModel model) {
-		for (int i = 0; i < model.getRowCount(); i++)
-			for (int j = 0; j < model.getColumnCount(); j++) {
-				model.setValueAt(Color.WHITE, i, j);
-			}
-		model.fireTableDataChanged();
-	}
-
 	private void updateScore(int score) {
 		scoreLabel.setText(scoreLabelName + score);
 	}
@@ -212,47 +187,8 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 	}
 
 	private int calculateScore(Piece addPiece) {
-		int linesNumber = shiftMatrix();
+		int linesNumber = model.addPieceAndShift(addPiece);
 		return (int) (linesNumber*LINE_SCORE*SCORE_BONUS);
-	}
-
-	public int shiftMatrix() {
-		int lastLine = TABLE_ROW_NUM - 1;
-		TreeSet<Integer> linesToErase = new TreeSet<>();
-		for( int i = TABLE_ROW_NUM - 1; i > 0; i--) {
-			boolean fullLine = true;
-			boolean emptyLine = true;
-			for( int j = TABLE_COL_NUM - 1; j >= 0; j--) {
-				if(model.getValueAt(i, j) == Color.WHITE) {
-					fullLine = false;
-				}
-				else {
-					emptyLine = false;
-				}
-			}
-			if(emptyLine) {
-				lastLine = i - 1;
-				break;
-			}
-			if(fullLine) {
-				linesToErase.add(i);
-			}
-		}
-		if(linesToErase.size() != 0) {
-			int jump = 1;
-			for (int i = linesToErase.last() - 1; i >= lastLine - jump; i--) {
-				if(linesToErase.contains(i)) {
-					jump++;
-				}
-				else{
-					for(int j = 0; j < TABLE_COL_NUM; j++) {
-						Color color = (Color) model.getValueAt(i, j);
-						model.setValueAt(color, i + jump, j);
-					}
-				}
-			}
-		}
-		return linesToErase.size();
 	}
 
 	@Override
@@ -273,6 +209,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 				break;
 			case KeyEvent.VK_Z:
 				piece.rotate(new RotateRightStrategy(piece));
+				break;
 			default:
 				return;
 			}
@@ -287,7 +224,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 	public void keyReleased(KeyEvent e) {
 	}
 
-	public static class buttonBuilder {
+	private static class buttonBuilder {
 		private JButton instance = new JButton();
 
 		public JButton build() {
@@ -306,7 +243,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 		}
 	}
 
-	public static class labelBuilder {
+	private static class labelBuilder {
 		private JLabel instance = new JLabel();
 
 		public JLabel build() {
@@ -319,7 +256,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 		}
 
 		public labelBuilder setAlignment(int align) {
-			instance.setHorizontalAlignment(align);;
+			instance.setHorizontalAlignment(align);
 			return this;
 		}
 
