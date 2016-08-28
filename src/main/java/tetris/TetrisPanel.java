@@ -10,9 +10,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Enumeration;
 
+import static tetris.Axis.X;
+import static tetris.Axis.Y;
+
 @SuppressWarnings("serial")
 public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 
+	static final int TABLE_COL_WIDTH = 20;
 	private static final String scoreLabelName = "Score: ";
 	private static final String useLabelName = "<html>Use arrow ctrls<br>to shift "
 			+ "and Z <br>to rotate</html>";
@@ -32,9 +36,9 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 	public TetrisPanel() {
 		model = new TetrisTableModel();
 		table = new JTable(model);
-		table.setDefaultRenderer(Color.class, new TetrisTabelCellRenderer());
-		table.setRowHeight(Constants.TABLE_ROW_NUM);
-		setColumnsWidth(Constants.TABLE_COL_WIDTH);
+		table.setDefaultRenderer(Color.class, new TetrisTableCellRenderer());
+		table.setRowHeight(X.max());
+		setColumnsWidth(TABLE_COL_WIDTH);
 		JPanel controlsPanel = createControlsPanel();
 		setLayout(new GridBagLayout());
 		table.addKeyListener(this);
@@ -91,7 +95,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 		pauseButton.setEnabled(false);
 	}
 
-	private class TetrisTabelCellRenderer extends DefaultTableCellRenderer {
+	private class TetrisTableCellRenderer extends DefaultTableCellRenderer {
 
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
@@ -133,13 +137,11 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 		case "timer":
 			if(piece == null) {
 				piece = getRandomPiece();
-				if(!piece.putOnModel()){
+				if (!model.putOnModel(piece)) {
 					stopGame();
 					JOptionPane.showMessageDialog(this, GAME_OVER_MESSAGE);
 				}
-			}
-			else 
-				if(!piece.move(new MoveDownStrategy(piece))){
+			} else if (!piece.move(new MoveDownStrategy(piece), X)) {
 					score += calculateScore(piece);
 					updateScore(score);
 					piece = null;
@@ -162,7 +164,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 
 	public Piece getRandomPiece() {
 		int index = (int) (PieceType.values().length * Math.random());
-		return getPiece( PieceType.values()[index], Piece.DEFAULT_BASE_CELL);
+		return getPiece(PieceType.values()[index], Piece.getDefaultCell());
 	}
 
 	public Piece getPiece(PieceType type, Cell base) {
@@ -197,18 +199,18 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 			switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
 			case KeyEvent.VK_KP_LEFT:
-				piece.move(new MoveLeftStrategy(piece));
+				piece.move(new MoveLeftStrategy(piece), Y);
 				break;
 			case KeyEvent.VK_RIGHT:
-			case KeyEvent.VK_KP_RIGHT:				 
-				piece.move(new MoveRightStrategy(piece));
+				case KeyEvent.VK_KP_RIGHT:
+					piece.move(new MoveRightStrategy(piece), Y);
 				break;
 			case KeyEvent.VK_DOWN:
 			case KeyEvent.VK_KP_DOWN:
-				piece.move(new MoveDownStrategy(piece));
+				piece.move(new MoveDownStrategy(piece), X);
 				break;
 			case KeyEvent.VK_Z:
-				piece.rotate(new RotateRightStrategy(piece));
+				piece.rotate(new RotateRightStrategy(piece), X, Y);
 				break;
 			default:
 				return;

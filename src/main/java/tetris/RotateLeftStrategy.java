@@ -9,11 +9,11 @@ public class RotateLeftStrategy extends RotateStrategy {
 		}
 
 	@Override
-	void applyRotation(Set<Cell> cells) {
+	void applyRotation(Set<Cell> cells, Axis x, Axis y) {
 		for (Cell cell : cells) {
-			int temp = cell.getX();
-			cell.setX(cell.getY());
-			cell.setY(-temp);
+			int temp = cell.get(x);
+			cell.set(x, cell.get(y));
+			cell.set(y, -temp);
 		}
 	}
 }

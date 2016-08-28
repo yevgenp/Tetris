@@ -2,72 +2,53 @@ package tetris;
 
 import org.junit.Test;
 
-import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.Assert.*;
+import static tetris.Axis.X;
+import static tetris.Axis.Y;
 
 public class PieceTest {
 
-    private TetrisMatrix model = new TetrisTableModel();
+    private final TetrisMatrix model = new TetrisMapModel();
 
     private void setup() {
         model.reset();
-        model.setValueAt(Color.MAGENTA, new Cell(19, 1));
-        model.setValueAt(Color.MAGENTA, new Cell(19, 2));
-        model.setValueAt(Color.MAGENTA, new Cell(19, 3));
-        model.setValueAt(Color.MAGENTA, new Cell(18, 2));
-        model.setValueAt(Color.BLUE, new Cell(19, 5));
-        model.setValueAt(Color.BLUE, new Cell(18, 5));
-        model.setValueAt(Color.BLUE, new Cell(17, 5));
-        model.setValueAt(Color.BLUE, new Cell(17, 6));
+        model.put(new Cell(19, 1));
+        model.put(new Cell(19, 2));
+        model.put(new Cell(19, 3));
+        model.put(new Cell(18, 2));
+        model.put(new Cell(19, 5));
+        model.put(new Cell(18, 5));
+        model.put(new Cell(17, 5));
+        model.put(new Cell(17, 6));
     }
 
     @Test
     public void shouldGetTopX() throws Exception {
         //given
         Piece ZPiece = new ZPiece(model, new Cell(0, 5));
-        Piece JPiece = new JPiece(model, new Cell(Constants.TABLE_ROW_NUM - 2, 4));
+        Piece JPiece = new JPiece(model, new Cell(X.max() - 2, 4));
         //when
         int ZTopX = ZPiece.getTopX();
         int JTopX = JPiece.getTopX();
         //then
         assertTrue(ZTopX == 0);
-        assertTrue(JTopX == Constants.TABLE_ROW_NUM - 2);
+        assertTrue(JTopX == X.max() - 2);
     }
 
     @Test
     public void shouldGetLowX() throws Exception {
         //given
         Piece SPiece = new SPiece(model, new Cell(0, 5));
-        Piece OPiece = new OPiece(model, new Cell(Constants.TABLE_ROW_NUM - 2, 4));
+        Piece OPiece = new OPiece(model, new Cell(X.max() - 2, 4));
         //when
         int ZLowX = SPiece.getLowX();
         int OLowX = OPiece.getLowX();
         //then
         assertTrue(ZLowX == 1);
-        assertTrue(OLowX == Constants.TABLE_ROW_NUM - 1);
-    }
-
-    @Test
-    public void shouldPiecePutOnModel() {
-        //given
-        setup();
-        //when
-        Piece zPiece = new ZPiece(model, new Cell(16, 7));
-        //then
-        assertTrue(zPiece.putOnModel());
-    }
-
-    @Test
-    public void shouldPieceThatOverlapOtherPutOnModel() {
-        //given
-        setup();
-        //when
-        Piece wrongPiece = new LPiece(model, new Cell(18, 1));
-        //then
-        assertFalse(wrongPiece.putOnModel());
+        assertTrue(OLowX == X.max() - 1);
     }
 
     @Test
@@ -100,7 +81,24 @@ public class PieceTest {
         Piece iPiece = new IPiece(model, new Cell(1, 15));
         //then
         iPiece.setCells(cells);
-        fail("IllegalArgumentException shoud have been thrown.");
+        fail("IllegalArgumentException should have been thrown.");
+    }
+
+    @Test
+    public void shouldGetDefaultCellReturnAlwaysNewCell() {
+        //given
+        Cell newCell_1, newCell_2, newCell_3;
+        //when
+        newCell_1 = Piece.getDefaultCell();
+        newCell_2 = Piece.getDefaultCell();
+        newCell_3 = Piece.getDefaultCell();
+        newCell_3.set(X, 17);
+        //then
+        assertFalse(newCell_1 == newCell_2);
+        assertTrue(newCell_1.equals(newCell_2));
+        assertTrue(newCell_1.equals(Piece.getDefaultCell()));
+        assertFalse(newCell_1 == newCell_3);
+        assertFalse(newCell_1.equals(newCell_3));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -110,17 +108,7 @@ public class PieceTest {
         //when
         new SPiece(model, outOfModelCell);
         //then
-        fail("IllegalArgumentException shoud have been thrown.");
-    }
-
-    @Test
-    public void shouldGetOutOfModelWhenCellSetWithIllegalCoordinates() {
-        //given
-        Cell cell = new Cell(19, 10);
-        //when
-        boolean result = Piece.isOutOfModel(cell);
-        //then
-        assertTrue(result);
+        fail("IllegalArgumentException should have been thrown.");
     }
 
     @Test
@@ -144,10 +132,10 @@ public class PieceTest {
         setup();
         Piece sPiece = new SPiece(model, new Cell(15, 4));
         //when
-        boolean moveLeft = sPiece.move(new MoveLeftStrategy(sPiece));
-        boolean moveDownThen = sPiece.move(new MoveDownStrategy(sPiece));
-        boolean moveRightThen = sPiece.move(new MoveRightStrategy(sPiece));
-        boolean moveRightAgain = sPiece.move(new MoveRightStrategy(sPiece));
+        boolean moveLeft = sPiece.move(new MoveLeftStrategy(sPiece), Y);
+        boolean moveDownThen = sPiece.move(new MoveDownStrategy(sPiece), X);
+        boolean moveRightThen = sPiece.move(new MoveRightStrategy(sPiece), Y);
+        boolean moveRightAgain = sPiece.move(new MoveRightStrategy(sPiece), Y);
         //then
         assertTrue(moveLeft);
         assertTrue(moveDownThen);
@@ -163,7 +151,7 @@ public class PieceTest {
         Piece piece = new IPiece(model, new Cell(14, 5));
         cells1 = piece.getCells();
         //when
-        piece.rotate(new RotateRightStrategy(piece));
+        piece.rotate(new RotateRightStrategy(piece), X, Y);
         cells2 = piece.getCells();
         cells2.removeAll(cells1);
         newCells = new HashSet<>();
@@ -183,7 +171,7 @@ public class PieceTest {
         Piece piece = new IPiece(model, new Cell(14, 5));
         cells1 = piece.getCells();
         //when
-        piece.rotate(new RotateLeftStrategy(piece));
+        piece.rotate(new RotateLeftStrategy(piece), X, Y);
         cells2 = piece.getCells();
         cells2.removeAll(cells1);
         newCells = new HashSet<>();

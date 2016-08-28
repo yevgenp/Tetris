@@ -1,65 +1,46 @@
 package tetris;
 
-import java.awt.*;
-import java.util.TreeSet;
-
-import static tetris.Constants.TABLE_COL_NUM;
+import java.util.HashSet;
+import java.util.Set;
 
 public interface TetrisMatrix {
 
-    Color getValueAt(Cell c);
+    boolean isPresent(Cell c);
 
-    void setValueAt(Color color, Cell c);
-
-    Color getEmptyCellColor();
+    void put(Cell c);
 
     void reset();
 
-    default int addPieceAndShift(Piece piece) {
-        int topX = piece.getTopX();
-        int lowX = piece.getLowX();
-        TreeSet<Integer> linesToErase = new TreeSet<>();
-        //Find full lines to erase
-        for (int i = lowX; i >= topX; i--) {
-            boolean fullLine = true;
-            for (int j = TABLE_COL_NUM - 1; j >= 0; j--) {
-                if (getValueAt(new Cell(i, j)) == getEmptyCellColor()) {
-                    fullLine = false;
-                    break;
-                }
-            }
-            if (fullLine) {
-                linesToErase.add(i);
-            }
+    void remove(Cell cell);
+
+    boolean putOnModel(Piece p);
+
+    int addPieceAndShift(Piece piece);
+
+    static void isValid(Cell cell) {
+        if (cell.getCoord().size() != Axis.values().length) {
+            throw new IllegalArgumentException("Cell coordinates number is illegal for current model.");
         }
-        //Find first empty line
-        for (int i = topX; i >= 0; i--) {
-            boolean emptyLine = true;
-            for (int j = TABLE_COL_NUM - 1; j >= 0; j--) {
-                if (getValueAt(new Cell(i, j)) != getEmptyCellColor()) {
-                    emptyLine = false;
-                    break;
-                }
-            }
-            if (emptyLine) {
-                topX = i + 1;
+        if (isOutOfModel(cell)) {
+            throw new IllegalArgumentException("Cell coordinates are out of model.");
+        }
+    }
+
+    static boolean isOutOfModel(Cell cell) {
+        boolean isOut = false;
+        for (Axis axis : Axis.values())
+            if (cell.get(axis) < 0 || cell.get(axis) >= axis.max()) {
+                isOut = true;
                 break;
             }
-        }
-        //Erase full and shift all lines above
-        if (linesToErase.size() != 0) {
-            int jump = 1;
-            for (int i = linesToErase.last() - 1; i >= topX - jump; i--) {
-                if (linesToErase.contains(i)) {
-                    jump++;
-                } else {
-                    for (int j = 0; j < TABLE_COL_NUM; j++) {
-                        Color color = getValueAt(new Cell(i, j));
-                        setValueAt(color, new Cell(i + jump, j));
-                    }
-                }
-            }
-        }
-        return linesToErase.size();
+        return isOut;
+    }
+
+    default void changeModelAndCells(Piece piece, Set<Cell> newCells) {
+        Set<Cell> oldCells = new HashSet<>(piece.getCells());
+        newCells.forEach(oldCells::remove);
+        oldCells.forEach(this::remove);
+        newCells.forEach(this::put);
+        piece.setCells(newCells);
     }
 }

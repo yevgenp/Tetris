@@ -6,41 +6,60 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static tetris.Axis.X;
+import static tetris.Axis.Y;
+import static tetris.TetrisTableModel.EMPTY_CELL_COLOR;
 
 public class TetrisTableModelTest {
+    private final TetrisTableModel model = new TetrisTableModel();
 
-    private TetrisPanel panel = new TetrisPanel();
-    private TetrisTableModel model = new TetrisTableModel();
+    private void setup() {
+        model.reset();
+        model.setValueAt(Color.MAGENTA, 19, 1);
+        model.setValueAt(Color.MAGENTA, 19, 2);
+        model.setValueAt(Color.MAGENTA, 19, 3);
+        model.setValueAt(Color.MAGENTA, 18, 2);
+        model.setValueAt(Color.BLUE, 19, 5);
+        model.setValueAt(Color.BLUE, 18, 5);
+        model.setValueAt(Color.BLUE, 17, 5);
+        model.setValueAt(Color.BLUE, 17, 6);
+    }
 
     @Test
-    public void shouldGetPieceAlwaysReturnOneOfPieceType() {
+    public void shouldPiecePutOnModel() {
         //given
-        Piece piece;
-        Cell base = new Cell(3, 4);
-        for (PieceType type : PieceType.values()) {
-            //when
-            piece = null;
-            piece = panel.getPiece(type, base);
-            //then
-            assertNotNull(piece);
-        }
+        setup();
+        //when
+        Piece zPiece = new ZPiece(model, new Cell(16, 7));
+        //then
+        assertTrue(model.putOnModel(zPiece));
+    }
+
+    @Test
+    public void shouldPieceThatOverlapOtherPutOnModel() {
+        //given
+        setup();
+        //when
+        Piece wrongPiece = new LPiece(model, new Cell(18, 1));
+        //then
+        assertFalse(model.putOnModel(wrongPiece));
     }
 
     @Test
     public void shouldAddPieceAndShift() {
         //given
         model.reset();
-        int lowX = Constants.TABLE_ROW_NUM - 1;
+        int lowX = X.max() - 1;
         int topX = lowX - Piece.PIECE_LENGTH;
-        int lowY = Constants.TABLE_COL_NUM - 1;
+        int lowY = Y.max() - 1;
         for (int i = lowX; i > topX; i--) {
             for (int j = lowY; j >= 0; j--) {
                 model.setValueAt(Color.BLACK, i, j);
             }
         }
-        model.setValueAt(model.getEmptyCellColor(), 18, 2);
+        model.setValueAt(EMPTY_CELL_COLOR, 18, 2);
         model.setValueAt(Color.CYAN, 18, 4);
         model.setValueAt(Color.YELLOW, 17, 1);
         model.setValueAt(Color.GRAY, 15, 8);
@@ -55,10 +74,10 @@ public class TetrisTableModelTest {
         int erasedLines = model.addPieceAndShift(iPiece);
         //then
         assertTrue(erasedLines == 3);
-        assertTrue(model.getValueAt(19, 2) == model.getEmptyCellColor());
+        assertTrue(model.getValueAt(19, 2) == EMPTY_CELL_COLOR);
         assertTrue(model.getValueAt(15, 8) != Color.GRAY);
         assertTrue(model.getValueAt(18, 8) == Color.GRAY);
         assertTrue(model.getValueAt(19, 4) == Color.CYAN);
-        assertTrue(model.getValueAt(17, 1) == model.getEmptyCellColor());
+        assertTrue(model.getValueAt(17, 1) == EMPTY_CELL_COLOR);
     }
 }

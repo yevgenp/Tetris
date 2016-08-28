@@ -1,41 +1,42 @@
 package tetris;
 
+import lombok.Setter;
+
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+@Setter
 abstract class MoveStrategy {
-	private int dX = 0, dY = 0;
-	private Piece piece;
+
+	final private Map<Axis, Integer> delta = new HashMap<>();
+	private final Piece piece;
 	
 	MoveStrategy(Piece piece) {
 		this.piece = piece;
 	}
-	
-	public int getdX() {
-		return dX;
+
+	abstract boolean move(Axis axis);
+
+	protected void set(Axis axis, Integer d) {
+		delta.put(axis, d);
 	}
-	public void setdX(int dX) {
-		this.dX = dX;
-	}
-	public int getdY() {
-		return dY;
-	}
-	public void setdY(int dY) {
-		this.dY = dY;
-	}
-	
-	abstract boolean move();
-	
-	protected boolean doMove() {
-		Set<Cell> newCells = new HashSet<>(); 
-		for (Cell cell : piece.getCells()) 
-			newCells.add(new Cell(cell.getX() + dX, cell.getY() + dY));			
+
+
+	protected boolean doMove(Axis axis) {
+		Set<Cell> newCells = new HashSet<>();
+		for (Cell cell : piece.getCells()) {
+			Cell newCell = cell.clone();
+			newCell.set(axis, cell.get(axis) + delta.get(axis));
+			newCells.add(newCell);
+		}
 		if(!piece.isSpaceAvailable(newCells)) {
 			return false;
 		}
-		piece.changeModelAndCells(newCells);
+		piece.getModel().changeModelAndCells(piece, newCells);
 		Cell base = piece.getBase();
-		piece.setBase((new Cell(base.getX() + dX, base.getY() + dY)));
+		base.set(axis, base.get(axis) + delta.get(axis));
 		return true;
 	}
 }

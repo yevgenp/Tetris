@@ -1,23 +1,26 @@
 package tetris;
 
+import lombok.Data;
+
 import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-import static tetris.Constants.TABLE_COL_NUM;
-import static tetris.Constants.TABLE_ROW_NUM;
+import static tetris.Axis.X;
+import static tetris.Axis.Y;
+import static tetris.TetrisMatrix.isOutOfModel;
 
 enum PieceType {
 	IPiece, JPiece, LPiece, OPiece,
 	SPiece, TPiece, ZPiece
 }
 
+@Data
 abstract class Piece {
 	static final int PIECE_LENGTH = 4;
-	static final Cell DEFAULT_BASE_CELL = new Cell(0, TABLE_COL_NUM / 2 - 1);
 
 	private Color color;
-	private Cell base = DEFAULT_BASE_CELL;
+	private Cell base = getDefaultCell();
 	private Set<Cell> cells;
 	private TetrisMatrix model;
 
@@ -29,13 +32,13 @@ abstract class Piece {
 
 	public abstract void init();
 
-	Set<Cell> getCells() {
-		return cells;
+	static public Cell getDefaultCell() {
+		return new Cell(0, Y.max() / 2 - 1);
 	}
 
 	protected void setCells(Set<Cell> cells) {
 		if(cells.size() != PIECE_LENGTH) {
-			throw new IllegalArgumentException("Piece should be " 
+			throw new IllegalArgumentException("Piece should be "
 					+ PIECE_LENGTH + " pieces long.");
 		}
 		else {
@@ -43,13 +46,8 @@ abstract class Piece {
 		}
 	}
 
-	public Cell getBase() {
-		return base;
-	}
-
 	public void setBase(Cell base) {
-		if (base.getX() < 0 | base.getX() >= TABLE_ROW_NUM
-				| base.getY() < 0 | base.getY() >= TABLE_COL_NUM) {
+		if (isOutOfModel(base)) {
 			throw new IllegalArgumentException("Base cell coordinates are illegal.");
 		}
 		else {
@@ -57,39 +55,12 @@ abstract class Piece {
 		}
 	}
 
-	public TetrisMatrix getModel() {
-		return model;
+	boolean move(MoveStrategy strategy, Axis axis) {
+		return strategy.move(axis);
 	}
 
-	public void setModel(TetrisMatrix model) {
-		this.model = model;
-	}
-
-	public Color getColor() {
-		return this.color;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	boolean putOnModel() {
-		for (Cell cell : cells)
-			if (model.getValueAt(cell) != model.getEmptyCellColor()) {
-				return false;
-			}
-			else {
-				model.setValueAt(getColor(), cell);
-			}
-		return true;
-	}
-
-	boolean move(MoveStrategy strategy) {
-		return strategy.move();
-	}
-
-	public boolean rotate(RotateStrategy strategy) {
-		return strategy.rotate();
+	public boolean rotate(RotateStrategy strategy, Axis x, Axis y) {
+		return strategy.rotate(x, y);
 	}
 
 	boolean isSpaceAvailable(Set<Cell> newCells) {
@@ -97,42 +68,19 @@ abstract class Piece {
 			throw new IllegalArgumentException("Illegal piece length.");
 		}
 		Set<Cell> temp = new HashSet<>(newCells);
-		for (Cell cell : cells) {
-			temp.remove(cell);
-		}
+		cells.forEach(temp::remove);
 		for (Cell cell : temp) {
-			if(isOutOfModel(cell)) {
-				return false;
-			}
-			if (model.getValueAt(cell) != model.getEmptyCellColor()) {
+			if (isOutOfModel(cell) || model.isPresent(cell)) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	static boolean isOutOfModel(Cell cell) {
-		return cell.getX() < 0 | cell.getY() < 0
-				| cell.getX() > (TABLE_ROW_NUM - 1)
-				| cell.getY() > (TABLE_COL_NUM - 1);
-	}
-
-	void changeModelAndCells(Set<Cell> newCells) {
-		Set<Cell> temp = new HashSet<>(this.cells);
-		for (Cell cell : newCells) {
-			temp.remove(cell);
-		}
-		for (Cell cell : temp)
-			model.setValueAt(model.getEmptyCellColor(), cell);
-		for (Cell newCell : newCells)
-			model.setValueAt(this.getColor(), newCell);
-		setCells(newCells);
-	}
-
 	int getTopX() {
-		int topX = TABLE_ROW_NUM;
+		int topX = X.max();
 		for (Cell cell : getCells()) {
-			topX = Math.min(topX, cell.getX());
+			topX = Math.min(topX, cell.get(X));
 		}
 		return topX;
 	}
@@ -140,7 +88,7 @@ abstract class Piece {
 	int getLowX() {
 		int lowX = 0;
 		for (Cell cell : getCells()) {
-			lowX = Math.max(lowX, cell.getX());
+			lowX = Math.max(lowX, cell.get(X));
 		}
 		return lowX;
 	}
