@@ -1,7 +1,7 @@
 package tetris;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class RotateStrategy {
 	private final Piece piece;
@@ -13,9 +13,7 @@ public abstract class RotateStrategy {
 	abstract void applyRotation(Set<Cell> cells, Axis x, Axis y);
 
 	protected boolean rotate(Axis x, Axis y) {
-		Set<Cell> newCells = new HashSet<>();
-		for (Cell cell : piece.getCells())
-			newCells.add(cell.clone());
+		Set<Cell> newCells = piece.getCells().stream().map(Cell::clone).collect(Collectors.toSet());
 		applyCoordinatesTranslation(newCells, x, y);
 		applyRotation(newCells, x, y);
 		revertCoordinatesTranslation(newCells, x, y);

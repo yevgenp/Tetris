@@ -6,14 +6,8 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
-import static tetris.Axis.X;
-import static tetris.Axis.Y;
+import static tetris.Axis.*;
 import static tetris.TetrisMatrix.isOutOfModel;
-
-enum PieceType {
-	IPiece, JPiece, LPiece, OPiece,
-	SPiece, TPiece, ZPiece
-}
 
 @Data
 abstract class Piece {

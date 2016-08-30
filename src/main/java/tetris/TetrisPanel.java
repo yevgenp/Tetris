@@ -10,8 +10,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Enumeration;
 
-import static tetris.Axis.X;
-import static tetris.Axis.Y;
+import static tetris.Axis.*;
 
 @SuppressWarnings("serial")
 public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
@@ -32,9 +31,11 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 	private int speed = 2;
 	private Piece piece = null;
 	private Timer timer;
+	final private PieceFactory pieceFactory;
 
 	public TetrisPanel() {
 		model = new TetrisTableModel();
+		pieceFactory = new PieceFactory(model);
 		table = new JTable(model);
 		table.setDefaultRenderer(Color.class, new TetrisTableCellRenderer());
 		table.setRowHeight(X.max());
@@ -136,7 +137,7 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 			break;
 		case "timer":
 			if(piece == null) {
-				piece = getRandomPiece();
+				piece = pieceFactory.getRandomPiece();
 				if (!model.putOnModel(piece)) {
 					stopGame();
 					JOptionPane.showMessageDialog(this, GAME_OVER_MESSAGE);
@@ -160,32 +161,6 @@ public class TetrisPanel extends JPanel implements ActionListener, KeyListener {
 
 	private void updateScore(int score) {
 		scoreLabel.setText(scoreLabelName + score);
-	}
-
-	public Piece getRandomPiece() {
-		int index = (int) (PieceType.values().length * Math.random());
-		return getPiece(PieceType.values()[index], Piece.getDefaultCell());
-	}
-
-	public Piece getPiece(PieceType type, Cell base) {
-		switch (type) {
-		case IPiece:
-			return new IPiece(model, base);
-		case JPiece:
-			return new JPiece(model, base);
-		case LPiece:
-			return new LPiece(model, base);
-		case OPiece:
-			return new OPiece(model, base);
-		case SPiece:
-			return new SPiece(model, base);
-		case TPiece:
-			return new TPiece(model, base);
-		case ZPiece:
-			return new ZPiece(model, base);
-		default:
-			throw new IllegalArgumentException("Unknown piece type");
-		}
 	}
 
 	private int calculateScore(Piece addPiece) {
